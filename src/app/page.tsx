@@ -8,8 +8,7 @@ export default function Home() {
   return (
     <ReduxProvider>
       <main>
-        <h2>WOW</h2>
-        <Button>WOWWW</Button>
+        <Button variant="outlined">WOWWW</Button>
         <UpdateButton />
       </main>
     </ReduxProvider>
