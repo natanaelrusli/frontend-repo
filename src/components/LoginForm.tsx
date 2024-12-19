@@ -3,8 +3,7 @@
 import React, { useState } from 'react';
 import { Button, Grid, TextField, Typography } from '@mui/material';
 import { useRouter } from 'next/navigation'; // Use Next.js router for redirection
-import { loginUser } from '@/apis/userApi';
-import Cookies from 'js-cookie';
+import { useLogin } from '@/apis/userApi';
 
 const LoginForm = () => {
   const router = useRouter();
@@ -12,8 +11,8 @@ const LoginForm = () => {
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const { mutate: login, isLoading, data } = useLogin();
 
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(event.target.value);
@@ -49,19 +48,16 @@ const LoginForm = () => {
   };
 
   const handleLogin = async () => {
-    setLoading(true);
     setErrorMessage('');
 
-    const result = await loginUser(email, password);
-
-    if (result.success) {
-      Cookies.set('token', result.token)
-      router.push('/');
-    } else {
-      setErrorMessage(result.message);
-    }
-
-    setLoading(false);
+    login({ email, password }, {
+      onSuccess: () => {
+        router.push('/');
+      },
+      onError: () => {
+        setErrorMessage(data?.message || '');
+      }
+    });
   };
 
   return (
@@ -106,9 +102,9 @@ const LoginForm = () => {
               sx={{ bgcolor: 'orange' }}
               size='large'
               fullWidth
-              disabled={loading}
+              disabled={isLoading}
             >
-              {loading ? 'Logging in...' : 'Login'}
+              {isLoading ? 'Logging in...' : 'Login'}
             </Button>
           </Grid>
         </Grid>

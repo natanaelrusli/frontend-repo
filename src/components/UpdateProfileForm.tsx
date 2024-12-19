@@ -2,19 +2,24 @@
 
 import React, { useEffect, useState } from "react";
 import Cookies from "js-cookie";
+import { useDispatch } from "react-redux";
+import { Alert, CircularProgress, Grid2, TextField, Typography } from "@mui/material";
 
-import ReduxProvider from "@/store/reduxProvider";
-import { Grid2, TextField, Typography, Button } from "@mui/material";
-import { useGetUser } from "@/apis/userApi";
-import UpdateButton from "./UpdateButton";
+import { useGetUser, useUpdateProfile } from "@/apis/userApi";
+import UpdateButton from "@/components/UpdateButton";
+import { setAuthState } from "@/store/actions";
+import withReduxProvider from "@/hoc/withReduxProvider"; // Import the HOC
+import { useAppSelector } from "@/store";
 
 const UpdateProfileForm = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { data:userData , isLoading, isError } = useGetUser(Cookies.get('token'));
+
+  const dispatch = useDispatch();
+  const progressState = useAppSelector((state) => state.progress.progressState);
+  const { data: userData, isLoading } = useGetUser(Cookies.get("token"));
+  const { mutate: updateProfile } = useUpdateProfile();
 
   useEffect(() => {
     if (userData) {
@@ -36,111 +41,88 @@ const UpdateProfileForm = () => {
 
     if (!name || !email) {
       setErrorMessage("Name and email are required.");
+      dispatch(setAuthState("error"));
       return;
     }
 
     try {
-      setLoading(true);
-      setErrorMessage("");
-      setSuccessMessage("");
-
-      const token = Cookies.get('token');
-      if (!token) {
-        setErrorMessage("Token is missing. Please login again.");
-        return;
-      }
-
-      const response = await fetch("http://localhost:8080/update-user-data", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      dispatch(setAuthState("loading"));
+      updateProfile({
+        name, email
+      }, {
+        onSuccess: () => {
+          dispatch(setAuthState('success'));
         },
-        body: JSON.stringify({ name, email }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setSuccessMessage("Profile updated successfully!");
-      } else {
-        setErrorMessage(data.message || "Something went wrong. Please try again.");
-      }
+        onError: () => {
+          dispatch(setAuthState('error'));
+          setErrorMessage("Failed to update profile")
+        }
+      })
     } catch {
       setErrorMessage("An error occurred while updating your profile.");
-    } finally {
-      setLoading(false);
+      dispatch(setAuthState("error"));
     }
   };
 
-  if (isLoading) return <div>Loading...</div>;
-  if (isError) return <div>Sorry There was an Error</div>;
+  if (isLoading) return <CircularProgress />;
 
   return (
-    <ReduxProvider>
-      <div style={{ padding: "20px", width: "600px" }}>
-        <Typography
-          variant="h3"
-          sx={{ fontSize: "2rem", fontWeight: "bold", marginBottom: "1.2rem" }}
-          gutterBottom
-        >
-          Update Profile
-        </Typography>
+    <div style={{ padding: "20px", width: "600px" }}>
+      <Typography
+        variant="h3"
+        sx={{ fontSize: "2rem", fontWeight: "bold", marginBottom: "1.2rem" }}
+        gutterBottom
+      >
+        Update Profile
+      </Typography>
 
-        {/* Display any error messages */}
-        {errorMessage && (
-          <Typography color="error" variant="body2" gutterBottom>
+      {progressState === 'error' && (
+        <Alert sx={{ marginBottom: '12px' }} variant="filled" severity="error">
+          <Typography variant="body2">
             {errorMessage}
           </Typography>
-        )}
+        </Alert>
+      )}
 
-        {successMessage && (
-          <Typography color="success" variant="body2" gutterBottom>
-            {successMessage}
+      {progressState === 'success' && (
+        <Alert sx={{ marginBottom: '12px' }} variant="filled" severity="success">
+          <Typography variant="body2">
+            Profile updated successfully!
           </Typography>
-        )}
+        </Alert>
+      )}
 
-        <form onSubmit={handleSubmit}>
-          <Grid2 container direction="column" spacing={2}>
-            <Grid2>
-              <TextField
-                size="small"
-                label="Name"
-                variant="outlined"
-                fullWidth
-                value={name}
-                onChange={handleNameChange}
-              />
-            </Grid2>
-
-            <Grid2>
-              <TextField
-                size="small"
-                label="Email"
-                variant="outlined"
-                fullWidth
-                value={email}
-                onChange={handleEmailChange}
-              />
-            </Grid2>
-
-            <Grid2>
-              <UpdateButton />
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                fullWidth
-                disabled={loading}
-              >
-                {loading ? "Updating..." : "Update Profile"}
-              </Button>
-            </Grid2>
+      <form onSubmit={handleSubmit}>
+        <Grid2 container direction="column" spacing={2}>
+          <Grid2>
+            <TextField
+              size="small"
+              label="Name"
+              variant="outlined"
+              fullWidth
+              value={name}
+              onChange={handleNameChange}
+            />
           </Grid2>
-        </form>
-      </div>
-    </ReduxProvider>
+
+          <Grid2>
+            <TextField
+              size="small"
+              label="Email"
+              variant="outlined"
+              fullWidth
+              value={email}
+              onChange={handleEmailChange}
+            />
+          </Grid2>
+
+          <Grid2>
+            <UpdateButton onClick={handleSubmit} />
+          </Grid2>
+        </Grid2>
+      </form>
+    </div>
   );
 };
 
-export default UpdateProfileForm;
+export default withReduxProvider(UpdateProfileForm);
