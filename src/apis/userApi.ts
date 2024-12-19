@@ -1,10 +1,19 @@
+import { useQuery, UseQueryResult } from "@tanstack/react-query";
+import Cookies from "js-cookie";
+import { User } from "./user";
+
+export interface ApiError extends Error {
+  statusCode: number;
+  message: string;
+}
+
 export const loginUser = async (email: string, password: string) => {
   try {
     const response = await fetch(`http://localhost:8080/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        credentials: 'true'
+        credentials: 'include',
       },
       body: JSON.stringify({ email, password }),
     });
@@ -31,10 +40,23 @@ export const getUserData = async (token: string) => {
   });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch user data');
+    if (response.status === 401) {
+      Cookies.remove('token');
+    }
+
+    const error: ApiError = {
+      name: "ApiError",
+      statusCode: response.status,
+      message: (await response.json()).message || `Error ${response.status}`,
+    };
+
+    throw error;
   }
 
-  const data = await response.json();
-  return data;
+  const resp = await response.json();
+  return resp.data;
 };
 
+export function useGetUser (token: string | undefined): UseQueryResult<User> {
+  return useQuery(['getUser'], () => getUserData(token || ''))
+}

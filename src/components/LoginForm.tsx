@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Button, Grid, TextField, Typography } from '@mui/material';
 import { useRouter } from 'next/navigation'; // Use Next.js router for redirection
 import { loginUser } from '@/apis/userApi';
+import Cookies from 'js-cookie';
 
 const LoginForm = () => {
   const router = useRouter();
@@ -54,8 +55,7 @@ const LoginForm = () => {
     const result = await loginUser(email, password);
 
     if (result.success) {
-      localStorage.setItem('token', result.token);
-      document.cookie = `token=${result.token};`;
+      Cookies.set('token', result.token)
       router.push('/');
     } else {
       setErrorMessage(result.message);

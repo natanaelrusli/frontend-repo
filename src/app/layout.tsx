@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import "./globals.css";
 import { StyledRoot } from "./StyledRoot";
+import ReactQueryProvider from "./ReactQueryProvider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -31,7 +32,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AppRouterCacheProvider>
-          <StyledRoot>{children}</StyledRoot>
+          <ReactQueryProvider>
+            <StyledRoot>{children}</StyledRoot>
+          </ReactQueryProvider>
         </AppRouterCacheProvider>
       </body>
     </html>

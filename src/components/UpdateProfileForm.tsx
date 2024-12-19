@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Cookies from "js-cookie";
+
 import ReduxProvider from "@/store/reduxProvider";
 import { Grid2, TextField, Typography, Button } from "@mui/material";
-import { getUserData } from "@/apis/userApi";
-import { redirect } from "next/navigation";
-import { User } from "@/apis/user";
+import { useGetUser } from "@/apis/userApi";
 
 const UpdateProfileForm = () => {
   const [name, setName] = useState("");
@@ -13,35 +13,14 @@ const UpdateProfileForm = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const { data:userData , isLoading, isError } = useGetUser(Cookies.get('token'));
 
   useEffect(() => {
-    fetchUserData();
-  }, [])
-
-  async function fetchUserData() {
-    const cookies = document.cookie.split(";").reduce((acc: Record<string, string>, cookie) => {
-      const [key, value] = cookie.trim().split("=");
-      acc[key] = value;
-      return acc;
-    }, {});
-    
-    const token = cookies.token;
-
-    try {
-      if (!token) {
-        redirect('/login');
-      }
-
-      const resp = await getUserData(token);
-      const data = resp.data as User;
-      
-      setName(data.name);
-      setEmail(data.email);
-    } catch (error) {
-      console.error(error);
-      redirect('/login');
+    if (userData) {
+      setName(userData.name);
+      setEmail(userData.email);
     }
-  }
+  }, [userData]);
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setName(event.target.value);
@@ -64,7 +43,7 @@ const UpdateProfileForm = () => {
       setErrorMessage("");
       setSuccessMessage("");
 
-      const token = localStorage.getItem("token"); // Get token from localStorage
+      const token = Cookies.get('token');
       if (!token) {
         setErrorMessage("Token is missing. Please login again.");
         return;
@@ -93,6 +72,9 @@ const UpdateProfileForm = () => {
     }
   };
 
+  if (isLoading) return <div>Loading...</div>;
+  if (isError) return <div>Sorry There was an Error</div>;
+
   return (
     <ReduxProvider>
       <div style={{ padding: "20px", width: "600px" }}>
@@ -111,7 +93,6 @@ const UpdateProfileForm = () => {
           </Typography>
         )}
 
-        {/* Display success message after successful update */}
         {successMessage && (
           <Typography color="success" variant="body2" gutterBottom>
             {successMessage}
@@ -120,7 +101,6 @@ const UpdateProfileForm = () => {
 
         <form onSubmit={handleSubmit}>
           <Grid2 container direction="column" spacing={2}>
-            {/* Name Field */}
             <Grid2>
               <TextField
                 size="small"
@@ -132,7 +112,6 @@ const UpdateProfileForm = () => {
               />
             </Grid2>
 
-            {/* Email Field */}
             <Grid2>
               <TextField
                 size="small"
@@ -144,7 +123,6 @@ const UpdateProfileForm = () => {
               />
             </Grid2>
 
-            {/* Submit Button */}
             <Grid2>
               <Button
                 type="submit"
