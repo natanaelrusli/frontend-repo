@@ -1,11 +1,9 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { useDispatch, TypedUseSelectorHook, useSelector } from "react-redux";
-import { progressReducer } from "@/store/slices/progressSlices";
+import { progressReducer } from "./reducers";
 
 export const store = configureStore({
   reducer: { progress: progressReducer },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({ serializableCheck: false }),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

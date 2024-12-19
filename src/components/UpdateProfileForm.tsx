@@ -6,6 +6,7 @@ import Cookies from "js-cookie";
 import ReduxProvider from "@/store/reduxProvider";
 import { Grid2, TextField, Typography, Button } from "@mui/material";
 import { useGetUser } from "@/apis/userApi";
+import UpdateButton from "./UpdateButton";
 
 const UpdateProfileForm = () => {
   const [name, setName] = useState("");
@@ -124,6 +125,7 @@ const UpdateProfileForm = () => {
             </Grid2>
 
             <Grid2>
+              <UpdateButton />
               <Button
                 type="submit"
                 variant="contained"
