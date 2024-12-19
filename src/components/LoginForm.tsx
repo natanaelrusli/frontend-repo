@@ -1,9 +1,11 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Button, Grid, TextField, Typography } from '@mui/material';
+import { Alert, Button, Grid, TextField, Typography } from '@mui/material';
 import { useRouter } from 'next/navigation'; // Use Next.js router for redirection
 import { useLogin } from '@/apis/userApi';
+import { ErrorWithStatusCode } from '@/errors/errorWithStatusCode';
+import { ERROR_MESSAGES } from '@/errors/errorMessages';
 
 const LoginForm = () => {
   const router = useRouter();
@@ -12,7 +14,7 @@ const LoginForm = () => {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const { mutate: login, isLoading, data } = useLogin();
+  const { mutate: login, isLoading } = useLogin();
 
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(event.target.value);
@@ -30,7 +32,6 @@ const LoginForm = () => {
     setErrorMessage('');
 
     let isValid = true;
-
     const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
     if (!email || !emailRegex.test(email)) {
       setEmailError('Please enter a valid email.');
@@ -51,11 +52,24 @@ const LoginForm = () => {
     setErrorMessage('');
 
     login({ email, password }, {
-      onSuccess: () => {
-        router.push('/');
+      onSuccess: (data) => {
+        if (data.success) {
+          router.push('/');
+        }
       },
-      onError: () => {
-        setErrorMessage(data?.message || '');
+      onError: (error) => {
+        if (error instanceof ErrorWithStatusCode) {
+          const statusCode = error.statusCode;
+          if (statusCode === 401) {
+            setErrorMessage(ERROR_MESSAGES.UNAUTHORIZED);
+          } else if (statusCode === 500) {
+            setErrorMessage(ERROR_MESSAGES.SERVER_ERROR);
+          } else {
+            setErrorMessage(ERROR_MESSAGES.UNKNOWN_ERROR);
+          }
+        } else {
+          setErrorMessage(ERROR_MESSAGES.UNEXPECTED_ERROR);
+        }
       }
     });
   };
@@ -68,7 +82,11 @@ const LoginForm = () => {
 
       <p className='mb-4 text-gray-800'>Fill the form below to login!</p>
 
-      {errorMessage && <Typography color="error" variant="body2">{errorMessage}</Typography>}
+      {errorMessage && (
+        <Alert sx={{ marginBottom: '12px' }} variant="filled" severity="error">
+          <Typography variant="body2">{errorMessage}</Typography>
+        </Alert>
+      )}
 
       <form onSubmit={handleSubmit}>
         <Grid container direction="column" spacing={2}>

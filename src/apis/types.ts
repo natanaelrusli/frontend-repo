@@ -4,6 +4,7 @@ export interface ApiResponse {
 }
 export interface LoginResponse {
   success: boolean;
+  statusCode: number;
   token?: string;
   message?: string;
 }

@@ -14,10 +14,10 @@ import { useAppSelector } from "@/store";
 const UpdateProfileForm = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
 
   const dispatch = useDispatch();
   const progressState = useAppSelector((state) => state.progress.progressState);
+  const progressMessage = useAppSelector((state) => state.progress.message)
   const { data: userData, isLoading } = useGetUser(Cookies.get("token"));
   const { mutate: updateProfile } = useUpdateProfile();
 
@@ -40,27 +40,38 @@ const UpdateProfileForm = () => {
     event.preventDefault();
 
     if (!name || !email) {
-      setErrorMessage("Name and email are required.");
-      dispatch(setAuthState("error"));
+      dispatch(setAuthState({
+        progressState: 'error',
+        message: "Name and email are required."
+      }));
       return;
     }
 
     try {
-      dispatch(setAuthState("loading"));
+      dispatch(setAuthState({
+        progressState: 'loading'
+      }));
       updateProfile({
         name, email
       }, {
         onSuccess: () => {
-          dispatch(setAuthState('success'));
+          dispatch(setAuthState({
+            progressState: 'success',
+            message: 'Profile updated successfully!'
+          }));
         },
         onError: () => {
-          dispatch(setAuthState('error'));
-          setErrorMessage("Failed to update profile")
+          dispatch(setAuthState({
+            progressState: 'error',
+            message: 'Failed to update profile'
+          }));
         }
       })
     } catch {
-      setErrorMessage("An error occurred while updating your profile.");
-      dispatch(setAuthState("error"));
+      dispatch(setAuthState({
+        progressState: 'error',
+        message: 'An error occurred while updating your profile.'
+      }));
     }
   };
 
@@ -79,7 +90,7 @@ const UpdateProfileForm = () => {
       {progressState === 'error' && (
         <Alert sx={{ marginBottom: '12px' }} variant="filled" severity="error">
           <Typography variant="body2">
-            {errorMessage}
+            { progressMessage }
           </Typography>
         </Alert>
       )}
@@ -87,7 +98,7 @@ const UpdateProfileForm = () => {
       {progressState === 'success' && (
         <Alert sx={{ marginBottom: '12px' }} variant="filled" severity="success">
           <Typography variant="body2">
-            Profile updated successfully!
+            { progressMessage }
           </Typography>
         </Alert>
       )}

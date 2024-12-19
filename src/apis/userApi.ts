@@ -3,9 +3,10 @@ import Cookies from "js-cookie";
 import { User } from "./user";
 import { ApiResponse, LoginCredentials, LoginResponse, UpdateProfilePayload } from "./types";
 import { ApiError } from "next/dist/server/api-utils";
+import { ErrorWithStatusCode } from "@/errors/errorWithStatusCode";
 
 const loginUser = async ({ email, password }: LoginCredentials): Promise<LoginResponse> => {
-  const response = await fetch(`http://localhost:8080/login`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -14,13 +15,12 @@ const loginUser = async ({ email, password }: LoginCredentials): Promise<LoginRe
   });
 
   const res = await response.json();
-
   if (response.ok) {
     Cookies.set("token", res.data.token);
-    return { success: true, token: res.data.token };
+    return { success: true, statusCode: response.status, token: res.data.token };
   }
 
-  return { success: false, message: res.message || "Login failed. Please try again." };
+  throw new ErrorWithStatusCode(res.message || "Login failed", response.status);
 };
 
 const updateProfile = async ({ email, name }: UpdateProfilePayload): Promise<ApiResponse> => {
@@ -29,7 +29,7 @@ const updateProfile = async ({ email, name }: UpdateProfilePayload): Promise<Api
     return { success: false, message: "No token" }; 
   }
 
-  const response = await fetch("http://localhost:8080/update-user-data", {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-user-data`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -53,7 +53,7 @@ const updateProfile = async ({ email, name }: UpdateProfilePayload): Promise<Api
 }
 
 const getUserData = async (token: string) => {
-  const response = await fetch('http://localhost:8080/fetch-user-data', {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fetch-user-data`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
