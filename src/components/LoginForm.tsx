@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button, Grid, TextField, Typography } from '@mui/material';
 import { useRouter } from 'next/navigation'; // Use Next.js router for redirection
 import { loginUser } from '@/apis/userApi';
@@ -13,16 +13,6 @@ const LoginForm = () => {
   const [passwordError, setPasswordError] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [isCheckingToken, setIsCheckingToken] = useState(true);
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      router.push('/');
-    } else {
-      setIsCheckingToken(false);
-    }
-  }, [router]);
 
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(event.target.value);
@@ -65,6 +55,7 @@ const LoginForm = () => {
 
     if (result.success) {
       localStorage.setItem('token', result.token);
+      document.cookie = `token=${result.token};`;
       router.push('/');
     } else {
       setErrorMessage(result.message);
@@ -72,10 +63,6 @@ const LoginForm = () => {
 
     setLoading(false);
   };
-
-  if (isCheckingToken) {
-    return <div>Loading...</div>;
-  }
 
   return (
     <div className='p-4 w-full max-w-[400px]'>

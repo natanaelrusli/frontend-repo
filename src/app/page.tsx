@@ -1,16 +1,29 @@
-'use client'
+import React from 'react';
+import UpdateProfileForm from '@/components/UpdateProfileForm';
+import { Box, Container } from '@mui/material';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
-import UpdateButton from "@/components/UpdateButton";
-import ReduxProvider from "@/store/reduxProvider";
-import { Button } from "@mui/material";
+export default async function Home() {
+  const cookieStore = cookies();
+  const token = cookieStore.get('token')?.value;
 
-export default function Home() {
+  if (!token) {
+    redirect('/login');
+  }
+
   return (
-    <ReduxProvider>
-      <main>
-        <Button variant="outlined">WOWWW</Button>
-        <UpdateButton />
-      </main>
-    </ReduxProvider>
+    <Container maxWidth="sm">
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100dvh',
+        }}
+      >
+        <UpdateProfileForm/>
+      </Box>
+    </Container>
   );
 }

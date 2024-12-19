@@ -12,10 +12,6 @@ export async function generateMetadata() {
   if (token) {
     redirect('/');
   }
-
-  return {
-    title: 'Login - My App', // Metadata for the page
-  };
 }
 
 const LoginPage = () => {

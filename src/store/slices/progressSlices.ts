@@ -7,7 +7,7 @@ export interface Progress {
 type ProgressState = 'loading' | 'error' | 'success' | '';
 
 const initialState: Progress = {
-  progressState: 'loading',
+  progressState: '',
 };
 
 export const progressSlice = createSlice({
