@@ -1,9 +1,9 @@
 import { useMutation, UseMutationResult, useQuery, UseQueryResult } from "@tanstack/react-query";
 import Cookies from "js-cookie";
-import { User } from "./user";
 import { ApiResponse, LoginCredentials, LoginResponse, UpdateProfilePayload } from "./types";
 import { ApiError } from "next/dist/server/api-utils";
 import { ErrorWithStatusCode } from "@/errors/errorWithStatusCode";
+import { User } from "./user";
 
 const loginUser = async ({ email, password }: LoginCredentials): Promise<LoginResponse> => {
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/login`, {
@@ -26,7 +26,7 @@ const loginUser = async ({ email, password }: LoginCredentials): Promise<LoginRe
 const updateProfile = async ({ email, name }: UpdateProfilePayload): Promise<ApiResponse> => {
   const token = Cookies.get("token");
   if (!token) {
-    return { success: false, message: "No token" }; 
+    throw new ErrorWithStatusCode("Update profile failed", 400);
   }
 
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-user-data`, {
@@ -38,18 +38,22 @@ const updateProfile = async ({ email, name }: UpdateProfilePayload): Promise<Api
     body: JSON.stringify({ name, email }),
   });
 
-  const data = await response.json();
+  const res = await response.json();
 
-  if (response.ok) {
-    return { success: true, message: data.message }
-  } else {
+  if (!response.ok) {
     if (response.status === 401) {
       if (typeof window !== "undefined") {
         window.location.href = "/login";
       }
+      throw new ErrorWithStatusCode(res.errors || "Unauthorized", response.status);
+    } else if (response.status === 400) {
+      throw new ErrorWithStatusCode(res.errors || "Invalid data", response.status);
     }
-    return({ success: false, message: data.message });
+
+    throw new ErrorWithStatusCode(res.errors || "Update profile failed", response.status);
   }
+
+  return { success: true, message: res.message };
 }
 
 const getUserData = async (token: string) => {

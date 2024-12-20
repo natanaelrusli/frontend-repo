@@ -60,10 +60,10 @@ const UpdateProfileForm = () => {
             message: 'Profile updated successfully!'
           }));
         },
-        onError: () => {
+        onError: (error) => {
           dispatch(setAuthState({
             progressState: 'error',
-            message: 'Failed to update profile'
+            message: error.message
           }));
         }
       })
